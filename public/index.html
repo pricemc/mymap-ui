@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="res/semantic.min.css">
+	<script src="res/jquery-2.2.0.min.js"></script>
+	<script src="res/semantic.min.js"></script>
+</head>
+
+<body>
+
+    <nav class="ui fixed menu inverted navbar">
+        <a href="" class="brand item">Ghetto Hacks for MyMAP</a>
+        <a href="" class="active item">Home</a>
+        <a href="" class="item">Features</a>
+        <a href="" class="item">About</a>
+    </nav>
+
+    <main class="ui page grid">
+    	<div class="row"></div>
+        <div class="row">
+            <div class="center aligned column">
+                <h1 class="ui header">Collection of Ghetto Hacks for MyMAP</h1>
+            </div>
+        </div>
+        <div class="row">
+        	<div class="ten wide column">
+        		<!--<h1>Bulk Professor Rater</h1>
+        		<p><i>Ratings from ratemyprofessors.com</i></p>
+        		<div class="ui form">
+        			<textarea id="bulk-rate-text" class="ui textarea" placeholder="John Smith,Henry Doe,Jackmerius Tacktheratrix"></textarea>
+        		</div>
+        		<button class="ui green button" id="bulk-rate">Submit</button>-->
+
+        		<iframe id="mini-page" name="mini-page" width=900 height=600 target="_blank" src="http://y.byu.edu/ry/ae/prod/registration/cgi/regOfferings.cgi"></iframe>
+        		<button class="ui green button" id="bulk-rate">Rate All Professors On This Page</button>
+        		<button class="ui blue button" id="add-class">I want this class</button>
+        	</div>
+        </div>
+        <div class="row">
+        <div class="sixteen wide column">
+			<div id= "rater-loader" class="ui inverted dimmer">
+				<div class="ui text loader">Loading</div>
+			</div>
+			<div id="results">
+			</div>
+        </div>
+    </main>
+</body>
+
+<script>
+var rateData = [];
+
+/*$("#bulk-rate").click(function () {
+	profNames = $("#bulk-rate-text").val().split(",");
+	$.ajax({
+		url: "rate-professors",
+		type: "POST",
+		data: { "names": profNames },
+		success: function (data) {
+			rateData = data;
+			$("#rater-loader").removeClass("active");
+			createRatingTable(rateData);
+		},
+		error: function (data) {
+			console.log("Bulk rater failed!");
+		}
+	});
+	$("#rater-loader").addClass("active");
+});*/
+
+function createRatingTable (data) {
+	html = '<table class="ui fluid celled padded table">'
+	html += "<tr><th>Name</th><th>Helpfulness</th><th>Easiness</th><th>Average Grade</th><th></th><th>Comment</th><th></th></tr>";
+	for (var i = 0; i < data.length; i++) {
+		var prof = data[i];
+		var comment = prof["comments"][0]["comment"];
+		var prev = '<button data-prof-ix=' + i + ' data-com-ix=0 class="mini comment-back ui blue button">&laquo;Prev</button>';
+		var next = '<button data-prof-ix=' + i + ' data-com-ix=0 class="mini comment-forward ui blue button">Next&raquo;</button>';
+		html += "<tr><td>" + prof["Name"] + "</td><td>" + prof["Helpfulness"] + "</td><td>";
+		html += prof["Easiness"] + "</td><td>" + prof["Average Grade"] + "</td><td>" + prev + "</td>"
+		html += '<td class="prof-comment six wide">' + comment + "</td><td>" + next + "</td></tr>";
+	}
+	html += "</table>";
+	$("#results").html(html);
+
+	$(".comment-back").on('click', function () {
+		var profIx = $(this).attr('data-prof-ix')
+		var curComIx = $(this).attr('data-com-ix')
+		curComIx = (curComIx > 0) ? (curComIx - 1) : rateData[profIx]["comments"].length - 1;
+		$(this).attr('data-com-ix', curComIx);
+		$(this).parent().parent().find(".comment-forward").attr("data-com-ix", curComIx);
+		$(this).parent().parent().find(".prof-comment").html(rateData[profIx]["comments"][curComIx]["comment"]);
+	});
+
+	$(".comment-forward").on('click', function () {
+		var profIx = $(this).attr('data-prof-ix')
+		var curComIx = $(this).attr('data-com-ix')
+		curComIx = (curComIx < rateData[profIx]["comments"].length - 1) ? parseInt(curComIx) + 1 : 0;
+		console.log(curComIx + ", " + rateData[profIx]["comments"].length);
+		$(this).attr('data-com-ix', curComIx);
+		$(this).parent().parent().find(".comment-back").attr("data-com-ix", curComIx);
+		$(this).parent().parent().find(".prof-comment").html(rateData[profIx]["comments"][curComIx]["comment"]);
+	})
+}
+
+</script>
+</html>
