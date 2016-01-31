@@ -1,0 +1,24 @@
+We want to scrap the class search url:
+http://saasta.byu.edu/noauth/classSchedule/index.php
+
+probably using nightmarejs
+So, you can probably hard-code load the course list.
+
+Make nightmarejs select each department and search it
+
+Then grab all the HTML from the table, and press the next button if it's enabled.
+
+Make sure you aggregate all the HTML, then pass to Beautiful soup Python extractor.
+
+In python, aggregate all the classes together, match the department name with the class name (it matches, right?)
+Output as a JSON structure
+
+{ "department" : [{"name": "MATH 314", "time" : "blah blah", "prof":"etcetc"}]}
+
+Then when the localhost website loads, pull the list of departments and NAMES only.  Make a searchable box so you can search like "Math 314" and have it return.  DEFINITELY keep track of the course description to make everything indexable.
+
+Make sure students can aggregate all their classes into a listbox.  Clicking on a class in the listbox brings up the "rate all the professors"
+
+Then maybe a scheduler widget where you can deselect times and stuff, and a backtracker solver.
+
+Have fun!
