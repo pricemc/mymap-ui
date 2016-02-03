@@ -5,6 +5,9 @@
 	<link rel="stylesheet" type="text/css" href="res/semantic.min.css">
 	<script src="res/jquery-2.2.0.min.js"></script>
 	<script src="res/semantic.min.js"></script>
+	<script src="rate-profs.js"></script>
+	<script src="res/underscore-min.js"></script>
+	<script src="get-section-table.js"></script>
 </head>
 
 <body>
@@ -20,89 +23,159 @@
     	<div class="row"></div>
         <div class="row">
             <div class="center aligned column">
-                <h1 class="ui header">Collection of Ghetto Hacks for MyMAP</h1>
+                <h1 class="ui header">Ghetto Schedule Hacker for MyMAP</h1>
             </div>
         </div>
-        <div class="row">
-        	<div class="ten wide column">
-        		<!--<h1>Bulk Professor Rater</h1>
-        		<p><i>Ratings from ratemyprofessors.com</i></p>
-        		<div class="ui form">
-        			<textarea id="bulk-rate-text" class="ui textarea" placeholder="John Smith,Henry Doe,Jackmerius Tacktheratrix"></textarea>
-        		</div>
-        		<button class="ui green button" id="bulk-rate">Submit</button>-->
 
-        		<iframe id="mini-page" name="mini-page" width=900 height=600 target="_blank" src="http://y.byu.edu/ry/ae/prod/registration/cgi/regOfferings.cgi"></iframe>
-        		<button class="ui green button" id="bulk-rate">Rate All Professors On This Page</button>
-        		<button class="ui blue button" id="add-class">I want this class</button>
-        	</div>
-        </div>
-        <div class="row">
-        <div class="sixteen wide column">
-			<div id= "rater-loader" class="ui inverted dimmer">
-				<div class="ui text loader">Loading</div>
+		<div class="row">
+			<div class="ten wide column">
+				<div id="dept-dropdown" class="ui floating dropdown labeled icon search button">
+					
+				</div>
+				<p></p>
+				<div id="course-dropdown" class="ui floating dropdown labeled icon search button">
+					
+				</div>
+				<p>Note: Ratings and sections are for the current or approaching year/semester.</p>
+				<button id="add-course" class="ui disabled green button">Add</button>
+				<!--<button id="rate-profs" class="ui disabled blue button">Rate Professors</button>-->
+				<button id="see-sections" class="ui disabled black button">See Sections</button>
+	        </div>
+	        <div class="six wide column">
+	        	<h3>Your Courses</h3>
+	        	<div id="user-courses" class="ui list">
+				</div>
+				<button id="optimize" class="ui blue button">Optimize Schedule</button>
 			</div>
-			<div id="results">
+	    </div>
+
+	    <div class="row">
+	    	<div class="sixteen wide column">
+	    		<div id= "section-loader" class="ui inverted dimmer">
+					<div class="ui text loader">Loading</div>
+				</div>
+	    		<div id="section-table">
+	    			
+	    		</div>
+	    	</div>
+	    </div>
+
+	    <div class="row">
+	        <div class="sixteen wide column">
+	        	<div id= "rate-loader" class="ui inverted dimmer">
+					<div class="ui text loader">Loading, this might take a bit!</div>
+				</div>
+	        	<div id="rate-result">
+					
+				</div>
 			</div>
-        </div>
+		</div>
+
     </main>
 </body>
 
 <script>
-var rateData = [];
+var courseData = [];
+var sections = {};
+var rateDataOnDisplay = [];
+var sectionsOnDisplay = [];
+var userCourses = [];
 
-/*$("#bulk-rate").click(function () {
-	profNames = $("#bulk-rate-text").val().split(",");
-	$.ajax({
-		url: "rate-professors",
-		type: "POST",
-		data: { "names": profNames },
-		success: function (data) {
-			rateData = data;
-			$("#rater-loader").removeClass("active");
-			createRatingTable(rateData);
-		},
-		error: function (data) {
-			console.log("Bulk rater failed!");
+$.post("get-courses", function (data) {
+	courseData = data;
+	var html = "<i class='world icon'></i><span class='text'>Select Department</span>"
+	html += getDepartmentMenu(data);
+
+	$("#dept-dropdown").html(html);
+	$("#dept-dropdown").dropdown({
+		onChange: function (v) {
+			var html = "<i class='book icon'></i><span class='text'>Select Course</span>"
+			html += getCourseMenuOf(v, courseData);
+			setCourseUi(false);
+
+			$("#course-dropdown").html(html);
+			$("#course-dropdown").dropdown({
+				onChange: function (v) {
+					setCourseUi(true);
+				}
+			});
 		}
 	});
-	$("#rater-loader").addClass("active");
-});*/
+});
 
-function createRatingTable (data) {
-	html = '<table class="ui fluid celled padded table">'
-	html += "<tr><th>Name</th><th>Helpfulness</th><th>Easiness</th><th>Average Grade</th><th></th><th>Comment</th><th></th></tr>";
-	for (var i = 0; i < data.length; i++) {
-		var prof = data[i];
-		var comment = prof["comments"][0]["comment"];
-		var prev = '<button data-prof-ix=' + i + ' data-com-ix=0 class="mini comment-back ui blue button">&laquo;Prev</button>';
-		var next = '<button data-prof-ix=' + i + ' data-com-ix=0 class="mini comment-forward ui blue button">Next&raquo;</button>';
-		html += "<tr><td>" + prof["Name"] + "</td><td>" + prof["Helpfulness"] + "</td><td>";
-		html += prof["Easiness"] + "</td><td>" + prof["Average Grade"] + "</td><td>" + prev + "</td>"
-		html += '<td class="prof-comment six wide">' + comment + "</td><td>" + next + "</td></tr>";
+$("#see-sections").click(function () {
+	var course = getSelectedCourse();
+	var year = 2016 // CHANGE LATER!?
+	var semester = 1; // TODO
+	$("#section-loader").addClass("active");
+	var callback = function () { $("#section-loader").removeClass("active"); }
+	if (sections.hasOwnProperty(course.id)) {
+		sectionsOnDisplay = sections[course.id];
+		createSectionTable(sections[course.id], $("#section-table"), callback);
+	} else {
+		$.ajax({ 
+			url: "get-sections", 
+			type: "POST", 
+			data: {"courseId" : course.id, "titleCode" : course.titleCode, "year": year, "semester" : semester},
+			success: function (data) {
+				// Table them
+				sections[course.id] = data;
+				sectionsOnDisplay = data;
+				createSectionTable(data, $("#section-table"), callback);
+			},
+			error: function (data) {
+				console.log("Error! " + data);
+			}
+		});
 	}
-	html += "</table>";
-	$("#results").html(html);
+});
 
-	$(".comment-back").on('click', function () {
-		var profIx = $(this).attr('data-prof-ix')
-		var curComIx = $(this).attr('data-com-ix')
-		curComIx = (curComIx > 0) ? (curComIx - 1) : rateData[profIx]["comments"].length - 1;
-		$(this).attr('data-com-ix', curComIx);
-		$(this).parent().parent().find(".comment-forward").attr("data-com-ix", curComIx);
-		$(this).parent().parent().find(".prof-comment").html(rateData[profIx]["comments"][curComIx]["comment"]);
-	});
+$("#add-course").click(function () {
+	var course = getSelectedCourse();
+	if (userCourses.hasOwnProperty(course.id)) return;
 
-	$(".comment-forward").on('click', function () {
-		var profIx = $(this).attr('data-prof-ix')
-		var curComIx = $(this).attr('data-com-ix')
-		curComIx = (curComIx < rateData[profIx]["comments"].length - 1) ? parseInt(curComIx) + 1 : 0;
-		console.log(curComIx + ", " + rateData[profIx]["comments"].length);
-		$(this).attr('data-com-ix', curComIx);
-		$(this).parent().parent().find(".comment-back").attr("data-com-ix", curComIx);
-		$(this).parent().parent().find(".prof-comment").html(rateData[profIx]["comments"][curComIx]["comment"]);
+	userCourses[course.id] = course;
+	var remButton = "<button class='ui remove-course mini red button'>Remove</button>";
+	var itemize = "<div class='item' course-id=" + course.id + ">" + course.title + "&nbsp;&nbsp; " + remButton + "</div>";
+	$("#user-courses").append(itemize);
+	$(".remove-course").off();
+	$(".remove-course").on('click', function () {
+		delete userCourses[$(this).parent().attr('course-id')];
+		$(this).parent().remove();
 	})
+})
+
+$("#optimize").click(function () {
+	var keys = Object.keys(userCourses);
+	var query = "?ids=" + keys.join(" ");
+	window.location.href = "/schedule.html" + query;
+})
+
+function getSelectedCourse () {
+	var deptTxt = $("#dept-dropdown").dropdown("get text");
+	var courseTxt = $("#course-dropdown").dropdown("get text");
+	var dept = courseData.filter(function (x) { return x.name.toLowerCase() == deptTxt.toLowerCase() })[0];
+	return dept.courses.filter(function (x) { return x.title.toLowerCase() == courseTxt.toLowerCase() })[0];
 }
 
+function setCourseUi (active) {
+	var adding = (active) ? "active" : "disabled";
+	var removing = (active) ? "disabled" : "active";
+	var components = [$("#add-course"), $("#rate-profs"), $("#see-sections")];
+	components.map(function (x) { x.addClass(adding); x.removeClass(removing); });
+}
+
+function getCourseMenuOf (departmentName, data) {
+	var dept = data.filter(function (x) { return x.name.toLowerCase() == departmentName.toLowerCase() })[0];
+	return "<div class='menu'>" + dept.courses.reduce(function (x, y) {
+		return x + "<div class='item' curr-code=" + y.id + " title-code=" + y.titleCode + ">" + y.title + "</div>";
+	}, "") + "</div>";
+}
+
+function getDepartmentMenu (data) {
+	return "<div class='menu'>" + data.reduce(function (x, y) {
+		return x + "<div class='item'>" + y.name + "</div>"
+	}, "") + "</div>";
+}
 </script>
 </html>

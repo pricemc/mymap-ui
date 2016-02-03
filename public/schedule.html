@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="res/semantic.min.css">
+	<script src="res/jquery-2.2.0.min.js"></script>
+	<script src="res/semantic.min.js"></script>
+	<script src="res/angular.min.js"></script>
+	<script src="res/underscore-min.js"></script>
+</head>
+
+<body ng-app="app" ng-controller="mainCtrl">
+
+    <nav class="ui fixed menu inverted navbar">
+        <a href="" class="brand item">Ghetto Hacks for MyMAP</a>
+    </nav>
+
+    <main class="ui page grid">
+    	<div class="row"></div>
+        <div class="row">
+            <div class="center aligned column">
+                <h1 class="ui header">MyMap Schedule Optimizer</h1>
+            	<h3 class="ui hdeader">Check Available Times</h3>
+                <table class="ui celled fluid padded table">
+                	<tr>
+                		<td ng-repeat="day in days">{{day}}</td>
+                	</tr>
+                	<tr ng-repeat="time in times">
+                		<td ng-repeat="day in days">
+                			<div class="ui timecheck checkbox">
+							  <input type="checkbox" ng-model="checks[time][day]">
+							  <label>{{time}}</label>
+							</div>
+                		</td>
+                	</tr>
+                </table>
+                <a href="index.html" class="ui blue button">Back</a>
+                <button ng-click="debug()" class="ui blue button">Debug</button>
+            </div>
+        </div>
+        <div class="row">
+        	<div class="ten wide column">
+        		<h3 class="ui header">These courses will be put in your schedule:</h3>
+	        	<div id="user-courses" class="ui list">
+	        		<div ng-repeat="course in userCourses" class="item">
+	        			{{course.title}}
+	        			<!--<button class="ui mini yellow button">Pick a specific section</button>-->
+	        		</div>
+				</div>
+				<button ng-disabled="isLoadingSchedule" ng-click="optimize()" class="ui green button">Show me schedules</button>
+        	</div>
+        </div>
+        <div class="row">
+	    	<div class="sixteen wide column">
+	    		<div ng-hide="!isLoadingSchedule" class="ui active inverted dimmer">
+					<div class="ui text loader">{{loadInfo}}</div>
+				</div>
+	    		<div id="schedule-table">
+	    			
+	    		</div>
+	    	</div>
+	    </div>
+	    <div class="row"></div>
+	    <div class="row">
+	    	<div class="sixteen wide column">
+	    		<div ng-hide="!isLoadingSchedule" class="ui icon message">
+	    			<i class="info icon"></i>
+	    			<div class="content">
+	                	<div class="header">
+	                  	Did You Know?
+	                	</div>
+		                <p>Pandas eat almost 30 pounds of bamboo, every hour!</p>
+		                <button class="ui blue button">Cool!</button>
+		            </div>
+	    		</div>
+	    	</div>
+	    </div>
+
+		
+
+    </main>
+</body>
+
+<script>
+var app = angular.module('app',[]);
+
+app.controller('mainCtrl', ['$scope', function($scope) {
+	$scope.courseData = [];
+	$scope.userCourses = [];
+	$scope.sections = {};
+	$scope.loadInfo = "";
+	$scope.courseIds = (function () {
+		var ids = window.location.href.split("?")[1].split("=")[1];
+		return decodeURI(ids).split(" ");
+	})();
+	$scope.isLoadingSchedule = false;
+
+	$scope.times = ["8:00am - 9:00am", "9:00am - 10:00am", "10:00am - 11:00am", "12:00pm - 1:00pm",
+		"1:00pm - 2:00pm", "2:00pm - 3:00pm", "4:00pm - 5:00pm"];
+	$scope.days = ["M", "T", "W", "Th", "F"];
+	$scope.checks = _.object($scope.times, _.map($scope.times, function (t) {
+		return _.object($scope.days, [true, true, true, true, true])
+	}));
+
+	
+	$.post("get-courses", function (data) {
+		$scope.courseData = data;
+
+		/* Find courses by id */
+		for (var k in $scope.courseData) {
+			for (var i = 0; i < $scope.courseData[k]["courses"].length; i++) {
+				if (_.contains($scope.courseIds, $scope.courseData[k]["courses"][i].id)) {
+					$scope.userCourses.push($scope.courseData[k]["courses"][i])
+					console.log($scope.courseData[k]["courses"][i])
+				}
+			}
+		}
+		$scope.$apply();
+	});
+
+	$scope.optimize = function () {
+		$scope.loadInfo = "Loading, this is going to take a long time.  Updates will be written here."
+		$scope.isLoadingSchedule = true;
+		$scope.optimizely = [];
+
+		var constraints = _.map($scope.days, function (d) {
+			return _.map($scope.times, function (t) {
+				return $scope.checks[t][d];
+			})
+		});
+
+
+		var ajaxes = [];
+		for (var i = 0; i < $scope.userCourses.length; i++) {
+			ajaxes.push($.ajax({
+				type: "POST",
+				url: "get-sections",
+				data: { 
+					"courseId": $scope.userCourses[i].id,
+					"titleCode" : $scope.userCourses[i].titleCode,
+					"year": 2016,
+					"semester": 1
+				},
+				success: function (data) {
+					console.log(data[0]);
+					$scope.optimizely.push(data);
+				}
+			}));
+		}
+
+		$.when.apply($, ajaxes).done(function () {
+			$scope.loadInfo = "Sections for all your courses were fetched."
+
+			$scope.$apply();
+		})
+		/*
+		url: "get-sections", 
+			type: "POST", 
+			data: {"courseId" : course.id, "titleCode" : course.titleCode, "year": year, "semester" : semester},
+			success: function (data) {
+				// Table them
+				sections[course.id] = data;
+				sectionsOnDisplay = data;
+				createSectionTable(data, $("#section-table"), callback);
+			},
+			error: function (data) {
+				console.log("Error! " + data);
+			}
+			*/
+
+	}
+
+
+	$scope.debug = function () {
+	console.log(JSON.stringify($scope.checks))
+	}
+}]);
+</script>
+</html>
