@@ -23,7 +23,7 @@
     	<div class="row"></div>
         <div class="row">
             <div class="center aligned column">
-                <h1 class="ui header">Ghetto Schedule Hacker for MyMAP</h1>
+                <h1 class="ui header">MyMAP</h1>
             </div>
         </div>
 
@@ -109,17 +109,16 @@ $("#see-sections").click(function () {
 	var semester = 1; // TODO
 	$("#section-loader").addClass("active");
 	var callback = function () { $("#section-loader").removeClass("active"); }
-	if (sections.hasOwnProperty(course.id)) {
-		sectionsOnDisplay = sections[course.id];
-		createSectionTable(sections[course.id], $("#section-table"), callback);
+	if (sections.hasOwnProperty(course.uid)) {
+		sectionsOnDisplay = sections[course.uid];
+		createSectionTable(sections[course.uid], $("#section-table"), callback);
 	} else {
 		$.ajax({ 
 			url: "get-sections", 
 			type: "POST", 
 			data: {"courseId" : course.id, "titleCode" : course.titleCode, "year": year, "semester" : semester},
 			success: function (data) {
-				// Table them
-				sections[course.id] = data;
+				sections[course.uid] = data;
 				sectionsOnDisplay = data;
 				createSectionTable(data, $("#section-table"), callback);
 			},
@@ -132,22 +131,21 @@ $("#see-sections").click(function () {
 
 $("#add-course").click(function () {
 	var course = getSelectedCourse();
-	if (userCourses.hasOwnProperty(course.id)) return;
-
-	userCourses[course.id] = course;
+	if (userCourses.hasOwnProperty(course.uid)) return;
+	userCourses[course.uid] = course;
 	var remButton = "<button class='ui remove-course mini red button'>Remove</button>";
-	var itemize = "<div class='item' course-id=" + course.id + ">" + course.title + "&nbsp;&nbsp; " + remButton + "</div>";
+	var itemize = "<div class='item' course-uid=" + course.uid + ">" + course.title + "&nbsp;&nbsp; " + remButton + "</div>";
 	$("#user-courses").append(itemize);
 	$(".remove-course").off();
 	$(".remove-course").on('click', function () {
-		delete userCourses[$(this).parent().attr('course-id')];
+		delete userCourses[$(this).parent().attr('course-uid')];
 		$(this).parent().remove();
 	})
 })
 
-$("#optimize").click(function () {
+$("#optimize").on('click', function () {
 	var keys = Object.keys(userCourses);
-	var query = "?ids=" + keys.join(" ");
+	var query = "?ids=" + keys.join(" ")
 	window.location.href = "/schedule.html" + query;
 })
 

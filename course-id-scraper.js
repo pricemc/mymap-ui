@@ -7,8 +7,8 @@ read({ prompt: 'Password: ', silent: true }, function(er, password) {
 })
 
 function doCrawl(username, pass) {
-  categories = fs.readFileSync('deptlist.txt', 'utf8').split("\n");
-  descriptions = fs.readFileSync('deptdescript.txt', 'utf8').split("\n");  
+  categories = fs.readFileSync('mymap-data/deptlist.txt', 'utf8').split("\n");
+  descriptions = fs.readFileSync('mymap-data/deptdescript.txt', 'utf8').split("\n");  
 
   vo(function* () {
     var nightmare = Nightmare({ show: true });
@@ -40,7 +40,7 @@ function doCrawl(username, pass) {
   })
   (function (err, result) {
     if (err) return console.log(err);
-    fs.writeFileSync("course-list-temp.html", result);
+    fs.writeFileSync("mymap-data/course-list-temp.html", result);
     console.log("Successfully recorded courses in course-list-temp.html")
   });
 }

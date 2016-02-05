@@ -22,6 +22,7 @@
     "nightmare": "^2.1.3",
     "python-shell": "^0.3.0",
     "read": "^1.0.7",
+    "underscore": "^1.8.3",
     "vo": "^1.0.3"
   }
 }

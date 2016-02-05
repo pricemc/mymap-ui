@@ -27,7 +27,7 @@
                 	</tr>
                 	<tr ng-repeat="time in times">
                 		<td ng-repeat="day in days">
-                			<div class="ui timecheck checkbox">
+                			<div class="ui checkbox">
 							  <input type="checkbox" ng-model="checks[time][day]">
 							  <label>{{time}}</label>
 							</div>
@@ -60,10 +60,10 @@
 	    		</div>
 	    	</div>
 	    </div>
-	    <div class="row"></div>
-	    <div class="row">
+	    <div class="row" ng-hide="!isLoadingSchedule"></div>
+	    <div class="row" ng-hide="!isLoadingSchedule">
 	    	<div class="sixteen wide column">
-	    		<div ng-hide="!isLoadingSchedule" class="ui icon message">
+	    		<div class="ui icon message">
 	    			<i class="info icon"></i>
 	    			<div class="content">
 	                	<div class="header">
@@ -75,6 +75,59 @@
 	    		</div>
 	    	</div>
 	    </div>
+
+	    <div class="row" ng-hide="!showSchedules">
+	    	<div class="center aligned column">
+        	<h1 class="ui header">Possible Schedules ({{currentScheduleIx}} / {{schedules.length}})</h1>
+        	<button ng-hide="showSectionView" ng-click="showSectionView = true; showCalendarView = false" class="ui green button">Section View</button>
+        	<button ng-hide="showCalendarView" ng-click="showCalendarView = true; showSectionView = false" class="ui green button">Calendar View</button>
+        	<button ng-click="navSchedule(-1)" class="ui blue button">&laquo; Prev</button>
+        	<button ng-click="navSchedule(1)" class="ui blue button">Next &raquo;</button>
+       	</div>
+      </div>
+
+      <div class="row" ng-hide="!showCalendarView">
+      	<div class="center aligned column">
+          <table class="ui celled compact table">
+          	<tr>
+          		<td ng-repeat="day in days">{{day}}</td>
+          	</tr>
+          	<tr ng-repeat="time in times">
+          		<td ng-repeat="day in days" ng-class="currentSchedule[$parent.$index][$index].hasOwnProperty('name') ? 'positive' : ''">
+          			{{time}}
+          			<p><b>{{currentSchedule[$parent.$index][$index].name}}</b></p>
+          			<p><b>{{currentSchedule[$parent.$index][$index].prof}}</b></p>
+          			<p><b>{{currentSchedule[$parent.$index][$index].place}}</b></p>
+          			
+          			<br />
+          		</td>
+          	</tr>
+          </table>
+        </div>
+       </div>
+
+       <div class="row" ng-hide="!showSectionView">
+       	<div class="center aligned column">
+       		<table class="ui celled fluid compact table">
+       			<tr>
+       				<th ng-repeat="thing in ['Course Name', 'Professor', 'Days', 'Start Time(s)', 'End Time(s)', 'Place', 'Seats', 'Waitlist']">
+       					{{thing}}
+       				</th>
+       			</tr>
+       			<tr ng-repeat="section in schedules[currentScheduleIx]">
+       				<td>{{section.name}}</td>
+       				<td>{{section.prof}}</td>
+       				<td>{{section.daysText.join(", ")}}</td>
+       				<td>{{section.startTimeText.join(", ")}}</td>
+       				<td>{{section.endTimeText.join(", ")}}</td>
+       				<td>{{section.place.join(", ")}}</td>
+       				<td>{{section.seats}}</td>
+       				<td>{{section.waitlist}}</td>
+       			</tr>
+       		</table>
+       	</div>
+       </div>
+
 
 		
 
@@ -88,19 +141,30 @@ app.controller('mainCtrl', ['$scope', function($scope) {
 	$scope.courseData = [];
 	$scope.userCourses = [];
 	$scope.sections = {};
+	$scope.schedules = [];
+	$scope.currentScheduleIx = 0;
+	$scope.currentSchedule = [];
 	$scope.loadInfo = "";
 	$scope.courseIds = (function () {
 		var ids = window.location.href.split("?")[1].split("=")[1];
-		return decodeURI(ids).split(" ");
+		return decodeURI(ids).split(" ")
 	})();
 	$scope.isLoadingSchedule = false;
+	$scope.showSchedules = false;
+	$scope.showSectionView = false;
+	$scope.showCalendarView = false;
 
-	$scope.times = ["8:00am - 9:00am", "9:00am - 10:00am", "10:00am - 11:00am", "12:00pm - 1:00pm",
-		"1:00pm - 2:00pm", "2:00pm - 3:00pm", "4:00pm - 5:00pm"];
+
+	$scope.times = ["6:00am - 7:00am", "7:00am - 8:00am", "8:00am - 9:00am", "9:00am - 10:00am", "10:00am - 11:00am", "11:00am - 12:00am", "12:00pm - 1:00pm", "1:00pm - 2:00pm", "2:00pm - 3:00pm", "3:00pm - 4:00pm", "4:00pm - 5:00pm", "5:00pm - 6:00pm", "6:00pm - 7:00pm", "7:00pm - 8:00pm", "8:00pm - 9:00pm", "9:00pm - 10:00pm"];
 	$scope.days = ["M", "T", "W", "Th", "F"];
 	$scope.checks = _.object($scope.times, _.map($scope.times, function (t) {
 		return _.object($scope.days, [true, true, true, true, true])
 	}));
+
+	var defaultOff = ["7:00am - 8:00am", "5:00pm - 6:00pm", "6:00pm - 7:00pm", "7:00pm - 8:00pm", "8:00pm - 9:00pm", "9:00pm - 10:00pm"];
+	_.map(defaultOff, function (t) {
+		_.map($scope.days, function (d) { $scope.checks[t][d] = false; })
+	})
 
 	
 	$.post("get-courses", function (data) {
@@ -109,9 +173,11 @@ app.controller('mainCtrl', ['$scope', function($scope) {
 		/* Find courses by id */
 		for (var k in $scope.courseData) {
 			for (var i = 0; i < $scope.courseData[k]["courses"].length; i++) {
-				if (_.contains($scope.courseIds, $scope.courseData[k]["courses"][i].id)) {
-					$scope.userCourses.push($scope.courseData[k]["courses"][i])
-					console.log($scope.courseData[k]["courses"][i])
+				for (var j = 0; j < $scope.courseIds.length; j++) {
+					if ($scope.courseData[k]["courses"][i].uid == $scope.courseIds[j]) {
+						$scope.userCourses.push($scope.courseData[k]["courses"][i])
+						break;
+					}
 				}
 			}
 		}
@@ -121,14 +187,19 @@ app.controller('mainCtrl', ['$scope', function($scope) {
 	$scope.optimize = function () {
 		$scope.loadInfo = "Loading, this is going to take a long time.  Updates will be written here."
 		$scope.isLoadingSchedule = true;
-		$scope.optimizely = [];
+		$scope.showSchedules = false;
+		$scope.showSectionView = false;
+		$scope.showCalendarView = false;
+		$scope.schedules = [];
+		$scope.currentSchedule = [];
+		$scope.currentScheduleIx = 0;
+		var optimizely = [];
 
-		var constraints = _.map($scope.days, function (d) {
+		$scope.isFree = _.map($scope.days, function (d) {
 			return _.map($scope.times, function (t) {
 				return $scope.checks[t][d];
 			})
 		});
-
 
 		var ajaxes = [];
 		for (var i = 0; i < $scope.userCourses.length; i++) {
@@ -142,8 +213,7 @@ app.controller('mainCtrl', ['$scope', function($scope) {
 					"semester": 1
 				},
 				success: function (data) {
-					console.log(data[0]);
-					$scope.optimizely.push(data);
+					optimizely.push(data);
 				}
 			}));
 		}
@@ -151,23 +221,149 @@ app.controller('mainCtrl', ['$scope', function($scope) {
 		$.when.apply($, ajaxes).done(function () {
 			$scope.loadInfo = "Sections for all your courses were fetched."
 
+			var timeToNum = function (t) {
+				var num = parseInt(t.split(":")[0]);
+				var sig = t.substring(t.length - 2, t.length);
+				if (sig == "pm" && num != 12) num += 12;
+				return num - parseInt($scope.times[0].split(":")[0]);
+			}
+
+			/* Convert string time to num time. */
+			/* Convert days to 0 - 4 format */
+			for (var i = 0; i < optimizely.length; i++) {
+				for (var j = 0; j < optimizely[i].length; j++) {
+					var section = optimizely[i][j]
+					optimizely[i][j]["daysText"] = _.clone(section["days"])
+					optimizely[i][j]["startTimeText"] = _.clone(section["startTime"]);
+					optimizely[i][j]["endTimeText"] = _.clone(section["endTime"]);
+					optimizely[i][j]["startTime"] = _.map(section["startTime"], timeToNum);
+					optimizely[i][j]["endTime"] = _.map(section["endTime"], timeToNum);
+					var days = _.map(section["days"], function (x) { 
+						return x.replace("M", "0").replace("Th", "3").replace("T", "1").replace("W", "2").replace("F", "4");
+					})
+					optimizely[i][j]["days"] = _.map(days, function(x) { 
+						return _.map(x.split(''), function (y) { return parseInt(y); });
+					});
+				}
+			}
+
+			var timeIsTakenByDays = function (days, startTimes, endTimes) {
+				/* Days in format [[0, 2], [4]] to indicate MW, Th for example. */
+				/* Times in format [[1, 2], [3, 5]] to indicate 8:00am - 9:00am MW, 10:00-12:50am Th, for example. */
+				/* This is a separate function because I want short circuit evaluation */
+				for (var j = 0; j < days.length; j++) {
+					for (var k = 0; k < days[j].length; k++) {
+						for (var l = startTimes[j]; l <= endTimes[j]; l++) {
+							//console.log("IS DAY " + days[j][k] + " FREE AT " + l + "? " + $scope.isFree[days[j][k]][l]);
+							if (!$scope.isFree[days[j][k]][l]) return true;
+						}
+					}
+				}
+				return false;
+			}
+
+			/* Sets all free times for days -> startTimes, endTimes */
+			var setAllTimes = function (days, startTimes, endTimes, truth) {
+				for (var j = 0; j < days.length; j++) {
+					for (var k = 0; k < days[j].length; k++) {
+						for (var l = startTimes; l <= endTimes; l++) {
+							$scope.isFree[days[j][k]][l] = truth;
+						}
+					}
+				}
+			}
+			
+			var useSections = _.map(optimizely, function (x) {
+				return _.map(x, function (y) { return false; });
+			});
+
+			$scope.loadInfo = "Okay, sit tight.  Generating schedules.";
+			console.log("OKAY CALLING DO IT");
+			var do_it = function (ix) {
+				if (ix == optimizely.length) return true;
+
+				for (var i = 0; i < optimizely[ix].length; i++) {
+					var candidate = optimizely[ix][i];
+					if (timeIsTakenByDays(candidate["days"], candidate["startTime"], candidate["endTime"])) continue;
+
+					// Time isn't taken!  Let's give it a shot.
+					setAllTimes(candidate["days"], candidate["startTime"], candidate["endTime"], false);
+					useSections[ix][i] = true;
+					var got_working_schedule = do_it(ix + 1);
+					if (got_working_schedule) {
+						$scope.schedules.push(_.map(useSections, _.clone))
+					}
+					useSections[ix][i] = false;
+					setAllTimes(days, candidate["startTime"], candidate["endTime"], true);
+				}
+				return false;
+			}
+			do_it(0);
+			console.log("OKAY DONE WITH DO IT");
+			// Convert each schedule into a schedule[time][day] = {course} format
+			$scope.schedules = _.map($scope.schedules, function (schedule) {
+				for (var i = 0; i < schedule.length; i++) {
+					schedule[i] = optimizely[i][schedule[i].indexOf(true)];
+				}
+				return schedule;
+			})
+
+
+			$scope.loadInfo = "Almost there...";
+			$scope.isLoadingSchedule = false;
+			$scope.showSchedules = true;
+			$scope.showSectionView = true;
+			
+			if ($scope.schedules.length > 0) {
+				$scope.currentScheduleIx = 0;
+				$scope.getCurrentSchedule($scope.currentScheduleIx);
+			}
+			else {
+
+				console.log("couldn't find anything");
+				// Sorry, this is where the "I'm sorry but we cxouldn't do anything for you"
+			}
 			$scope.$apply();
 		})
-		/*
-		url: "get-sections", 
-			type: "POST", 
-			data: {"courseId" : course.id, "titleCode" : course.titleCode, "year": year, "semester" : semester},
-			success: function (data) {
-				// Table them
-				sections[course.id] = data;
-				sectionsOnDisplay = data;
-				createSectionTable(data, $("#section-table"), callback);
-			},
-			error: function (data) {
-				console.log("Error! " + data);
-			}
-			*/
+	}
 
+	$scope.navSchedule = function (inc) {
+		$scope.currentScheduleIx += inc;
+		if ($scope.currentScheduleIx < 0) $scope.currentScheduleIx = $scope.schedules.length - 1;
+		if ($scope.currentScheduleIx == $scope.schedules.length) $scope.currentScheduleIx = 0;
+		$scope.getCurrentSchedule($scope.currentScheduleIx);
+	}
+
+	$scope.colorOf = function (i, j) {
+		if ($scope.currentSchedule.length == 0) return "";
+		return ($scope.currentSchedule[i][j].hasOwnProperty("name")) ? "positive" : "";
+	}
+
+	$scope.getCurrentSchedule = function (curIx) {
+		$scope.currentSchedule = _.map(_.range($scope.times.length), function (t) {
+			return _.map(_.range($scope.days.length), function (d) { return {}; })
+		});
+
+		for (var i = 0; i < $scope.schedules[curIx].length; i++) {
+			var course = $scope.schedules[curIx][i];
+
+			for (var j = 0; j < course["startTime"].length; j++) {
+				for (var k = course["startTime"][j]; k <= course["endTime"][j]; k++) {
+					for (var d = 0; d < course["days"][j].length; d++) {
+						$scope.currentSchedule[k][course["days"][j][d]] = {
+							"name": course.name,
+							"place": course.place[j],
+							"prof": course.prof,
+							"daysText" : course["daysText"],
+							"startTimeText" : course["startTimeText"],
+							"endTimeText" : course["endTimeText"],
+							"seats" : course.seats,
+							"waitlist" : course.waitlist
+						};
+					}
+				}
+			}
+		}
 	}
 
 
