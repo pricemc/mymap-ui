@@ -127,10 +127,6 @@
        		</table>
        	</div>
        </div>
-
-
-		
-
     </main>
 </body>
 
@@ -155,7 +151,7 @@ app.controller('mainCtrl', ['$scope', function($scope) {
 	$scope.showCalendarView = false;
 
 
-	$scope.times = ["6:00am - 7:00am", "7:00am - 8:00am", "8:00am - 9:00am", "9:00am - 10:00am", "10:00am - 11:00am", "11:00am - 12:00am", "12:00pm - 1:00pm", "1:00pm - 2:00pm", "2:00pm - 3:00pm", "3:00pm - 4:00pm", "4:00pm - 5:00pm", "5:00pm - 6:00pm", "6:00pm - 7:00pm", "7:00pm - 8:00pm", "8:00pm - 9:00pm", "9:00pm - 10:00pm"];
+	$scope.times = ["6:00am - 7:00am", "7:00am - 8:00am", "8:00am - 9:00am", "9:00am - 10:00am", "10:00am - 11:00am", "11:00am - 12:00pm", "12:00pm - 1:00pm", "1:00pm - 2:00pm", "2:00pm - 3:00pm", "3:00pm - 4:00pm", "4:00pm - 5:00pm", "5:00pm - 6:00pm", "6:00pm - 7:00pm", "7:00pm - 8:00pm", "8:00pm - 9:00pm", "9:00pm - 10:00pm"];
 	$scope.days = ["M", "T", "W", "Th", "F"];
 	$scope.checks = _.object($scope.times, _.map($scope.times, function (t) {
 		return _.object($scope.days, [true, true, true, true, true])
@@ -223,7 +219,7 @@ app.controller('mainCtrl', ['$scope', function($scope) {
 
 			var timeToNum = function (t) {
 				var num = parseInt(t.split(":")[0]);
-				var sig = t.substring(t.length - 2, t.length);
+				var sig = t.split(" - ")[0].substring(t.length - 2, t.length);
 				if (sig == "pm" && num != 12) num += 12;
 				return num - parseInt($scope.times[0].split(":")[0]);
 			}
@@ -284,9 +280,9 @@ app.controller('mainCtrl', ['$scope', function($scope) {
 
 				for (var i = 0; i < optimizely[ix].length; i++) {
 					var candidate = optimizely[ix][i];
+					// haha check seats available next.
 					if (timeIsTakenByDays(candidate["days"], candidate["startTime"], candidate["endTime"])) continue;
 
-					// Time isn't taken!  Let's give it a shot.
 					setAllTimes(candidate["days"], candidate["startTime"], candidate["endTime"], false);
 					useSections[ix][i] = true;
 					var got_working_schedule = do_it(ix + 1);
@@ -294,19 +290,19 @@ app.controller('mainCtrl', ['$scope', function($scope) {
 						$scope.schedules.push(_.map(useSections, _.clone))
 					}
 					useSections[ix][i] = false;
-					setAllTimes(days, candidate["startTime"], candidate["endTime"], true);
+					setAllTimes(candidate["days"], candidate["startTime"], candidate["endTime"], true);
 				}
 				return false;
 			}
 			do_it(0);
 			console.log("OKAY DONE WITH DO IT");
 			// Convert each schedule into a schedule[time][day] = {course} format
-			$scope.schedules = _.map($scope.schedules, function (schedule) {
+			$scope.schedules = _.shuffle(_.map($scope.schedules, function (schedule) {
 				for (var i = 0; i < schedule.length; i++) {
 					schedule[i] = optimizely[i][schedule[i].indexOf(true)];
 				}
 				return schedule;
-			})
+			}))
 
 
 			$scope.loadInfo = "Almost there...";

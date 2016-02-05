@@ -14,6 +14,7 @@ app.use(bodyParser.urlencoded({
 
 
 var courseList = parsers.getCourseList("mymap-data/course-list.txt");
+var sectionCache = parsers.getSectionCache("mymap-data/section-list.txt");
 
 app.use(express.static('public'));
 
@@ -26,9 +27,14 @@ app.post('/get-sections', function (req, res) {
   var year = req.body.year;
   var semester = req.body.semester; // 1, 2, 3, 4
   var courseId = req.body.courseId;
-  crawlers.crawlCourse(courseId, titleCode, year, semester, function (result) {
-    res.send(result);
-  });
+  if (sectionCache.hasOwnProperty(courseId + "|" + titleCode)) {
+    res.send(sectionCache[courseId + "|" + titleCode]);
+  }
+  else {
+    crawlers.crawlCourse(courseId, titleCode, year, semester, function (result) {
+      res.send(result);
+    });
+  }
 })
 
 app.post('/rate-professors', function(req, res) {

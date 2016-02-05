@@ -38,8 +38,7 @@
 				</div>
 				<p>Note: Ratings and sections are for the current or approaching year/semester.</p>
 				<button id="add-course" class="ui disabled green button">Add</button>
-				<!--<button id="rate-profs" class="ui disabled blue button">Rate Professors</button>-->
-				<button id="see-sections" class="ui disabled black button">See Sections</button>
+				<!--<button id="see-sections" class="ui disabled black button">See Sections</button>-->
 	        </div>
 	        <div class="six wide column">
 	        	<h3>Your Courses</h3>
@@ -97,13 +96,14 @@ $.post("get-courses", function (data) {
 			$("#course-dropdown").dropdown({
 				onChange: function (v) {
 					setCourseUi(true);
+					showSections();
 				}
 			});
 		}
 	});
 });
 
-$("#see-sections").click(function () {
+function showSections() {
 	var course = getSelectedCourse();
 	var year = 2016 // CHANGE LATER!?
 	var semester = 1; // TODO
@@ -127,7 +127,7 @@ $("#see-sections").click(function () {
 			}
 		});
 	}
-});
+}
 
 $("#add-course").click(function () {
 	var course = getSelectedCourse();

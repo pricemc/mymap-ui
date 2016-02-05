@@ -32,4 +32,8 @@ module.exports = {
 		}
 		return res;
 	},
+
+	getSectionCache : function (fName) {
+		return JSON.parse(fs.readFileSync(fName, 'utf8'));
+	}
 }
