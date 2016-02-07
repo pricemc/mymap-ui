@@ -47,6 +47,13 @@
 	        			<!--<button class="ui mini yellow button">Pick a specific section</button>-->
 	        		</div>
 				</div>
+				<div id="options">
+					<div class="ui checkbox">
+						<input ng-model="show0seats" type="checkbox">
+						<label>Allow Sections with 0 Available Seats</label>
+					</div>
+				</div>
+				<br />
 				<button ng-disabled="isLoadingSchedule" ng-click="optimize()" class="ui green button">Show me schedules</button>
         	</div>
         </div>
@@ -110,7 +117,7 @@
        	<div class="center aligned column">
        		<table class="ui celled fluid compact table">
        			<tr>
-       				<th ng-repeat="thing in ['Course Name', 'Professor', 'Days', 'Start Time(s)', 'End Time(s)', 'Place', 'Seats', 'Waitlist']">
+       				<th ng-repeat="thing in ['Course Name', 'Professor', 'Days', 'Start Time(s)', 'End Time(s)', 'Place', 'Available Seats', 'Waitlist']">
        					{{thing}}
        				</th>
        			</tr>
@@ -149,6 +156,9 @@ app.controller('mainCtrl', ['$scope', function($scope) {
 	$scope.showSchedules = false;
 	$scope.showSectionView = false;
 	$scope.showCalendarView = false;
+
+	/* Optimizer options */
+	$scope.show0seats = true;
 
 
 	$scope.times = ["6:00am - 7:00am", "7:00am - 8:00am", "8:00am - 9:00am", "9:00am - 10:00am", "10:00am - 11:00am", "11:00am - 12:00pm", "12:00pm - 1:00pm", "1:00pm - 2:00pm", "2:00pm - 3:00pm", "3:00pm - 4:00pm", "4:00pm - 5:00pm", "5:00pm - 6:00pm", "6:00pm - 7:00pm", "7:00pm - 8:00pm", "8:00pm - 9:00pm", "9:00pm - 10:00pm"];
@@ -282,6 +292,7 @@ app.controller('mainCtrl', ['$scope', function($scope) {
 					var candidate = optimizely[ix][i];
 					// haha check seats available next.
 					if (timeIsTakenByDays(candidate["days"], candidate["startTime"], candidate["endTime"])) continue;
+					if (!$scope.show0seats && parseInt(candidate["seats"].split("/")[0].trim()) == 0) continue;
 
 					setAllTimes(candidate["days"], candidate["startTime"], candidate["endTime"], false);
 					useSections[ix][i] = true;
