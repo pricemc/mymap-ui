@@ -24,16 +24,17 @@ app.post('/get-courses', function (req, res) {
 app.post('/get-sections', function (req, res) {
   var titleCode = req.body.titleCode;
   var year = req.body.year;
-  var semester = req.body.semester; // 1, 2, 3, 4
+  var semester = req.body.semester;
   var courseId = req.body.courseId;
-  if (sectionCache.hasOwnProperty(courseId + "|" + titleCode)) {
+  // The cache doesn't tell me what year it is...next cache I'll have to put that in.
+  /*if (sectionCache.hasOwnProperty(courseId + "|" + titleCode)) {
     res.send(sectionCache[courseId + "|" + titleCode]);
   }
-  else {
+  else {*/
     crawlers.crawlCourse(courseId, titleCode, year, semester, function (result) {
       res.send(result);
     });
-  }
+  //}
 })
 
 app.post('/rate-professors', function(req, res) {

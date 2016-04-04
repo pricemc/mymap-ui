@@ -102,22 +102,11 @@ $.post("get-courses", function (data) {
 	});
 });
 
-/*$("#add-all-courses").click(function () {
-	for (var i = 0; i < courseData.length; i++) {
-		for (var j = 0; j < courseData[i].courses.length; j++) {
-			var course = courseData[i].courses[j];
-			console.log(JSON.stringify(course))
-			addCourse(courseData[i])
-		}
-		
-
-	}
-})*/
 
 function showSections() {
 	var course = getSelectedCourse();
 	var year = 2016 // CHANGE LATER!?
-	var semester = 1; // TODO
+	var semester = 5; // TODO (winter: 1, fall: 5)
 	$("#section-loader").addClass("active");
 	var callback = function () { $("#section-loader").removeClass("active"); }
 	if (sections.hasOwnProperty(course.uid)) {

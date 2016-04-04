@@ -2,7 +2,7 @@ var vo = require('vo');
 var Nightmare = require('nightmare');
 var PythonShell = require('python-shell');
 
-var SHOW_NIGHTMARE = false;
+var SHOW_NIGHTMARE = true;
 
 module.exports = {
   crawlCourse:  function(id, titleCode, year, semester, callback) {
@@ -11,7 +11,7 @@ module.exports = {
     vo(function* () {
       var nightmare = Nightmare({ show: SHOW_NIGHTMARE });
       var allHtml = "<html><body><table>";
-
+      
       var link = yield nightmare
         .goto('http://saasta.byu.edu/noauth/classSchedule/index.php?' + query)
         .wait("div[onclick='resetSearch()']")
