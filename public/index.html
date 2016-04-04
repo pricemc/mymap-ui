@@ -156,8 +156,8 @@ $("#optimize").on('click', function () {
 function getSelectedCourse () {
 	var deptTxt = $("#dept-dropdown").dropdown("get text");
 	var courseTxt = $("#course-dropdown").dropdown("get text");
-	var dept = courseData.filter(function (x) { return x.name.toLowerCase() == deptTxt.toLowerCase() })[0];
-	return dept.courses.filter(function (x) { return x.title.toLowerCase() == courseTxt.toLowerCase() })[0];
+	var dept = courseData.filter(function (x) { return x.name.toLowerCase().trim() == deptTxt.toLowerCase().trim() })[0];
+	return dept.courses.filter(function (x) { return x.title.toLowerCase().trim() == courseTxt.toLowerCase().trim() })[0];
 }
 
 function setCourseUi (active) {
@@ -167,8 +167,14 @@ function setCourseUi (active) {
 	components.map(function (x) { x.addClass(adding); x.removeClass(removing); });
 }
 
+// Changelog for aaron
+// 1.  add trimming to all filters in index.html
+// 2.  disable electron shownightmare
+// 3.
+
 function getCourseMenuOf (departmentName, data) {
-	var dept = data.filter(function (x) { return x.name.toLowerCase() == departmentName.toLowerCase() })[0];
+	var dept = data.filter(function (x) { return x.name.toLowerCase().trim() == departmentName.toLowerCase().trim() })[0];
+
 	return "<div class='menu'>" + dept.courses.reduce(function (x, y) {
 		return x + "<div class='item' curr-code=" + y.id + " title-code=" + y.titleCode + ">" + y.title + "</div>";
 	}, "") + "</div>";

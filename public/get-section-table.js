@@ -3,6 +3,7 @@ function createSectionTable (data, attachElement, callback) {
 	var cols = ["Name", "Professor", "Days", "Time", "Place", "Seats Available", "Waitlist"];
 	html += "<tr>" + cols.reduce(function (x, y) { return x + "<th>" + y + "</th>"}, "") + "</tr>";
 	// Sections data looks like [{ tblah blah}, {blah blah}]...so just print it I guess
+	console.log(data)
 	html += data.reduce(function (acc, section) {
 		var ret = "<tr>";
 		ret += "<td>" + section["name"] + "</td><td>" + section["prof"] + "</td>";
