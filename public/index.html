@@ -36,6 +36,7 @@
 				</div>
 				<p>Note: Ratings and sections are for the current or approaching year/semester.</p>
 				<button id="add-course" class="ui disabled green button">Add</button>
+				<button id="add-all-courses" class="ui green button">Add All </button>
 				<!--<button id="see-sections" class="ui disabled black button">See Sections</button>-->
 	        </div>
 	        <div class="six wide column">
@@ -101,6 +102,18 @@ $.post("get-courses", function (data) {
 	});
 });
 
+/*$("#add-all-courses").click(function () {
+	for (var i = 0; i < courseData.length; i++) {
+		for (var j = 0; j < courseData[i].courses.length; j++) {
+			var course = courseData[i].courses[j];
+			console.log(JSON.stringify(course))
+			addCourse(courseData[i])
+		}
+		
+
+	}
+})*/
+
 function showSections() {
 	var course = getSelectedCourse();
 	var year = 2016 // CHANGE LATER!?
@@ -129,6 +142,10 @@ function showSections() {
 
 $("#add-course").click(function () {
 	var course = getSelectedCourse();
+	addCourse(course);
+})
+
+function addCourse (course) {
 	if (userCourses.hasOwnProperty(course.uid)) return;
 	userCourses[course.uid] = course;
 	var remButton = "<button class='ui remove-course mini red button'>Remove</button>";
@@ -139,7 +156,7 @@ $("#add-course").click(function () {
 		delete userCourses[$(this).parent().attr('course-uid')];
 		$(this).parent().remove();
 	})
-})
+}
 
 $("#optimize").on('click', function () {
 	var keys = Object.keys(userCourses);

@@ -12,7 +12,6 @@ app.use(bodyParser.urlencoded({
 
 /* Parse the huge course list into JSON */
 
-
 var courseList = parsers.getCourseList("mymap-data/course-list.txt");
 var sectionCache = parsers.getSectionCache("mymap-data/section-list.txt");
 
